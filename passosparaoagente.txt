@@ -1,0 +1,17 @@
+Passo 1
+desenvolver uma aplicação em python em modo gráfico que permita cifrar e decifrar ficheiros recorrendo às cifras clássicas de Viginérè e de PlayFair, e, às cifras modernas DES e AES. A implementação das cifras clássicas deverá ser realizada sem a utilização de bibliotecas que as disponibilizem como funções, devendo, portanto, ser implementadas de raiz. A implementação das cifras modernas deverá ser realizada utilizando bibliotecas criptográficas que as disponibilizem como funções, devendo, portanto, ser invocadas e utilizadas.
+Vamos começar com Viginere primeiro
+i) no caso da cifra de Viginérè, a aplicação deverá ler de um ficheiro de texto a tabela a utilizar, ler de um ficheiro de texto a chave a utilizar, pedir ao utilizado para escolher entre as operações de cifra ou de decifra, e, finalmente, pedir ao utilizador para indicar o ficheiro com a mensagem ou criptograma a cifrar ou decifrar, respetivamente; todos os ficheiros devem conter apenas caracteres ASCII visíveis; não precisamos de testing units ou readmes ou requirements
+
+
+Passo 2
+agora a Playfair
+(ii) no caso da cifra de Playfair, a aplicação deverá ler de um ficheiro de texto a tabela a utilizar, onde esteja, portanto, a chave e os restantes caracteres inseridos, pedir ao utilizado para escolher entre as operações de cifra ou de decifra, e, finalmente, pedir ao utilizador para indicar o ficheiro com a mensagem ou criptograma a cifrar ou decifrar, respetivamente; todos os ficheiros devem conter apenas caracteres ASCII visíveis;
+
+Passo 3
+A funcionalidade das cifras modernas deverá ser a seguinte: 
+i) no caso do DES, a aplicação deverá ler de um ficheiro de texto a chave a utilizar, pedir ao utilizado para escolher entre as operações de cifra ou de decifra, e, finalmente, pedir ao utilizador para indicar o ficheiro a cifrar ou decifrar, respetivamente; o ficheiro de entrada deverá ser processado em modo binário;
+
+Passo 4
+E finalmente
+(ii) no caso do AES, a aplicação deverá ler de um ficheiro de texto a chave a utilizar (que poderá ser de 128, 192 ou 256 bits), pedir ao utilizado para escolher entre as operações de cifra ou de decifra, e, finalmente, pedir ao utilizador para indicar o ficheiro a cifrar ou decifrar, respetivamente; o ficheiro de entrada deverá ser processado em modo binário.
