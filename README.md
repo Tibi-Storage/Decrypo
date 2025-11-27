@@ -4,21 +4,7 @@ Resumo
 - GUI em Tkinter para cifrar/decifrar ficheiros usando Vigenère, Playfair, DES e AES.
 - Vigenère e Playfair implementadas de raiz (regras do enunciado).
 - DES e AES implementadas usando bibliotecas criptográficas (PyCryptodome preferencialmente).
-
-Instalação
-1. Ative o virtualenv (se tiver):
-
-```powershell
-& E:\DecrypoCCA\Decrypo\.venv\Scripts\Activate.ps1
-```
-
-2. Instale dependências:
-
-```powershell
-pip install -r requirements.txt
-```
-
-Uso
+- 
 - Execute a aplicação:
 
 ```powershell
