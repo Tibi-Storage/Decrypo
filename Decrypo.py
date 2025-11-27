@@ -1,253 +1,157 @@
-import os
-import sys
 import tkinter as tk
-from tkinter import filedialog, messagebox, scrolledtext, simpledialog
+from tkinter import ttk, filedialog, messagebox
+from PLAYFAIR import (playfair_cifrar, playfair_decifrar)
 
-# ensure local modules are importable when running tests or as script
-sys.path.insert(0, os.path.dirname(__file__))
+from vigenere import (carregar_tabela, carregar_chave, carregar_mensagem,cifrar_vigenere, decifrar_vigenere)
 
-# Re-export functions from modules to keep backwards compatibility
-try:
-    from vigenere import *
-except Exception:
-    try:
-        from VIGENERE import *
-    except Exception:
-        pass
 
-try:
-    from playfair import *
-except Exception:
-    try:
-        from PLAYFAIR import *
-    except Exception:
-        pass
-
-try:
-    from modern import *
-except Exception:
-    try:
-        from MODERN import *
-    except Exception:
-        pass
-
-try:
-    from utils import *
-except Exception:
-    try:
-        from UTILS import *
-    except Exception:
-        pass
 
 
 class App:
     def __init__(self, root):
         self.root = root
-        root.title('Decrypo - Cifras Clássicas e Modernas')
+        self.root.title("Criptografia – Vigenère e Playfair")
 
-        self.cipher_var = tk.StringVar(value='VIGENERE')
-        self.op_var = tk.StringVar(value='CIFRAR')
-        self.table_path = tk.StringVar()
-        self.key_path = tk.StringVar()
-        self.input_path = tk.StringVar()
-        self.output_path = tk.StringVar()
+        tabs = ttk.Notebook(root)
+        tabs.pack(expand=True, fill="both")
 
-        row = 0
-        tk.Label(root, text='Cifra:').grid(row=row, column=0, sticky='w')
-        tk.OptionMenu(root, self.cipher_var, 'VIGENERE', 'PLAYFAIR', 'DES', 'AES', command=self._on_cipher_change).grid(row=row, column=1, sticky='we')
-        row += 1
-        tk.Label(root, text='Operação:').grid(row=row, column=0, sticky='w')
-        tk.OptionMenu(root, self.op_var, 'CIFRAR', 'DECIFRAR').grid(row=row, column=1, sticky='we')
-        row += 1
+        self.tab_vig = ttk.Frame(tabs)
+        tabs.add(self.tab_vig, text="Vigenère")
 
-        self.table_label = tk.Label(root, text='Ficheiro tabela (Vigenère / Playfair):')
-        self.table_label.grid(row=row, column=0, sticky='w')
-        self.table_entry = tk.Entry(root, textvariable=self.table_path, width=50)
-        self.table_entry.grid(row=row, column=1, sticky='we')
-        self.table_button = tk.Button(root, text='Selecionar', command=self.select_table)
-        self.table_button.grid(row=row, column=2)
-        row += 1
+        self.tab_playfair = ttk.Frame(tabs)
+        tabs.add(self.tab_playfair, text="Playfair")
 
-        self.key_label = tk.Label(root, text='Ficheiro chave (DES/AES ou Vigenère):')
-        self.key_label.grid(row=row, column=0, sticky='w')
-        self.key_entry = tk.Entry(root, textvariable=self.key_path, width=50)
-        self.key_entry.grid(row=row, column=1, sticky='we')
-        self.key_button = tk.Button(root, text='Selecionar', command=self.select_key)
-        self.key_button.grid(row=row, column=2)
-        row += 1
+        # construir tabs dinamicamente
+        self.ctx_vig = self.build_tab(self.tab_vig, "Vigenere")
+        self.ctx_play = self.build_tab(self.tab_playfair, "Playfair")
 
-        tk.Label(root, text='Ficheiro entrada:').grid(row=row, column=0, sticky='w')
-        self.input_entry = tk.Entry(root, textvariable=self.input_path, width=50)
-        self.input_entry.grid(row=row, column=1, sticky='we')
-        self.input_button = tk.Button(root, text='Selecionar', command=self.select_input)
-        self.input_button.grid(row=row, column=2)
-        row += 1
+    # -------------------------------------------------------
+    # Construção dinâmica de qualquer tab
+    # -------------------------------------------------------
+    def build_tab(self, frame, algoritmo="Vigenere"):
+        ctx = {}  # dicionário que guarda os widgets desta tab
 
-        tk.Label(root, text='Ficheiro saída:').grid(row=row, column=0, sticky='w')
-        self.output_entry = tk.Entry(root, textvariable=self.output_path, width=50)
-        self.output_entry.grid(row=row, column=1, sticky='we')
-        self.output_button = tk.Button(root, text='Selecionar', command=self.select_output)
-        self.output_button.grid(row=row, column=2)
-        row += 1
+        ttk.Label(frame, text="Ficheiro da tabela:").grid(row=0, column=0, sticky="w")
+        ctx["tabela_entry"] = ttk.Entry(frame, width=50)
+        ctx["tabela_entry"].grid(row=0, column=1)
+        ttk.Button(
+            frame, text="Abrir",
+            command=lambda: self.escolher_ficheiro(ctx, "tabela")
+        ).grid(row=0, column=2)
 
-        tk.Button(root, text='Executar', command=self.execute).grid(row=row, column=0, columnspan=3, sticky='we')
+        ttk.Label(frame, text="Ficheiro da chave:").grid(row=1, column=0, sticky="w")
+        ctx["chave_entry"] = ttk.Entry(frame, width=50)
+        ctx["chave_entry"].grid(row=1, column=1)
+        ttk.Button(
+            frame, text="Abrir",
+            command=lambda: self.escolher_ficheiro(ctx, "chave")
+        ).grid(row=1, column=2)
 
-        self._on_cipher_change(self.cipher_var.get())
+        ttk.Label(frame, text="Ficheiro da mensagem/criptograma:").grid(row=2, column=0, sticky="w")
+        ctx["msg_entry"] = ttk.Entry(frame, width=50)
+        ctx["msg_entry"].grid(row=2, column=1)
+        ttk.Button(
+            frame, text="Abrir",
+            command=lambda: self.escolher_ficheiro(ctx, "msg")
+        ).grid(row=2, column=2)
 
-    def _on_cipher_change(self, _):
-        c = self.cipher_var.get()
-        # Update labels to be explicit depending on selected cipher
-        if c == 'VIGENERE':
-            self.table_label.config(text='Ficheiro tabela (Vigenère - 26x26):')
-            self.key_label.config(text='Ficheiro chave (Vigenère):')
-            # enable both table and key selection
-            self.table_entry.config(state='normal')
-            self.table_button.config(state='normal')
-            self.key_entry.config(state='normal')
-            self.key_button.config(state='normal')
-        elif c == 'PLAYFAIR':
-            self.table_label.config(text='Ficheiro tabela Playfair (5x5 - 25 letras):')
-            self.key_label.config(text='Ficheiro chave (não aplicável para Playfair)')
-            # table required, key not applicable
-            self.table_entry.config(state='normal')
-            self.table_button.config(state='normal')
-            self.key_entry.delete(0, 'end')
-            self.key_entry.config(state='disabled')
-            self.key_button.config(state='disabled')
-        elif c == 'DES':
-            self.table_label.config(text='Ficheiro tabela (não aplicável para DES)')
-            self.key_label.config(text='Ficheiro chave (DES - 8 bytes ou 16 hex dígitos)')
-            # key required, table not applicable
-            self.table_entry.delete(0, 'end')
-            self.table_entry.config(state='disabled')
-            self.table_button.config(state='disabled')
-            self.key_entry.config(state='normal')
-            self.key_button.config(state='normal')
-        elif c == 'AES':
-            self.table_label.config(text='Ficheiro tabela (não aplicável para AES)')
-            self.key_label.config(text='Ficheiro chave (AES - 16/24/32 bytes ou hex)')
-            # key required, table not applicable
-            self.table_entry.delete(0, 'end')
-            self.table_entry.config(state='disabled')
-            self.table_button.config(state='disabled')
-            self.key_entry.config(state='normal')
-            self.key_button.config(state='normal')
+        ttk.Button(
+            frame, text="Cifrar",
+            command=lambda: self.cifrar_generico(ctx, algoritmo)
+        ).grid(row=3, column=0, pady=10)
 
-    def select_table(self):
-        p = filedialog.askopenfilename(title='Selecionar ficheiro de tabela (Vigenere/Playfair)')
-        if p:
-            self.table_path.set(p)
+        ttk.Button(
+            frame, text="Decifrar",
+            command=lambda: self.decifrar_generico(ctx, algoritmo)
+        ).grid(row=3, column=1, pady=10)
 
-    def select_key(self):
-        p = filedialog.askopenfilename(title='Selecionar ficheiro de chave (DES/AES)')
-        if p:
-            self.key_path.set(p)
+        ttk.Button(
+            frame, text="Guardar Resultado",
+            command=lambda: self.guardar_resultado_ctx(ctx)
+        ).grid(row=3, column=2, pady=10)
 
-    def select_input(self):
-        p = filedialog.askopenfilename(title='Selecionar ficheiro de entrada')
-        if p:
-            self.input_path.set(p)
+        ctx["resultado_text"] = tk.Text(frame, height=10, width=60)
+        ctx["resultado_text"].grid(row=4, column=0, columnspan=3, pady=10)
 
-    def select_output(self):
-        p = filedialog.asksaveasfilename(title='Selecionar ficheiro de saída', defaultextension='.txt')
-        if p:
-            self.output_path.set(p)
+        return ctx
 
-    def execute(self):
-        cipher = self.cipher_var.get()
-        op = self.op_var.get()
-        inpath = self.input_path.get()
-        outpath = self.output_path.get()
-        if not inpath or not outpath:
-            messagebox.showerror('Erro', 'Escolha ficheiro de entrada e saída')
-            return
+    # -------------------------------------------------------
+    # Escolher ficheiros
+    # -------------------------------------------------------
+    def escolher_ficheiro(self, ctx, tipo):
+        nome = filedialog.askopenfilename()
+        if nome:
+            entry = ctx[f"{tipo}_entry"]
+            entry.delete(0, tk.END)
+            entry.insert(0, nome)
+            ctx["resultado_text"].delete("1.0", tk.END)
+
+    # -------------------------------------------------------
+    # CIFRAR / DECIFRAR genérico
+    # -------------------------------------------------------
+    def cifrar_generico(self, ctx, algoritmo):
         try:
-            if cipher == 'VIGENERE':
-                # Vigenere: tabela e chave devem ser lidas de ficheiros de texto
-                if not self.table_path.get():
-                    messagebox.showerror('Erro', 'Escolha ficheiro de tabela para Vigenère')
-                    return
-                if not self.key_path.get():
-                    messagebox.showerror('Erro', 'Escolha ficheiro de chave para Vigenère')
-                    return
-                # validate table and key files contain only visible ASCII
-                tbl_bytes = open(self.table_path.get(), 'rb').read()
-                if not is_visible_ascii_bytes(tbl_bytes):
-                    raise ValueError('Ficheiro de tabela tem de conter apenas caracteres ASCII visíveis')
-                key_bytes = open(self.key_path.get(), 'rb').read()
-                if not is_visible_ascii_bytes(key_bytes):
-                    raise ValueError('Ficheiro de chave tem de conter apenas caracteres ASCII visíveis')
-                tabela = ler_tabela_vigenere(self.table_path.get())
-                chave = ler_chave_texto(self.key_path.get())
-                txt = open(inpath, 'r', encoding='utf-8').read()
-                if not is_visible_ascii_bytes(txt.encode('utf-8')):
-                    raise ValueError('Ficheiro de entrada tem de conter apenas caracteres ASCII visíveis')
-                if op == 'CIFRAR':
-                    res = cifrar_vigenere(txt, chave, tabela)
-                else:
-                    res = decifrar_vigenere(txt, chave, tabela)
-                with open(outpath, 'w', encoding='utf-8') as f:
-                    f.write(res)
-                messagebox.showinfo('OK', 'Operação concluída')
+            chave = carregar_chave(ctx["chave_entry"].get())
+            msg = carregar_mensagem(ctx["msg_entry"].get())
 
-            elif cipher == 'PLAYFAIR':
-                # Playfair: deve ler a tabela completa (chave + restantes) de ficheiro de texto
-                if not self.table_path.get():
-                    messagebox.showerror('Erro', 'Escolha ficheiro de tabela Playfair')
-                    return
-                # validate table file and input file contain only visible ASCII
-                tbl_bytes = open(self.table_path.get(), 'rb').read()
-                if not is_visible_ascii_bytes(tbl_bytes):
-                    raise ValueError('Ficheiro de tabela Playfair tem de conter apenas caracteres ASCII visíveis')
-                tabela, pos = ler_tabela_playfair(self.table_path.get())
-                in_bytes = open(inpath, 'rb').read()
-                if not is_visible_ascii_bytes(in_bytes):
-                    raise ValueError('Ficheiro de entrada tem de conter apenas caracteres ASCII visíveis')
-                txt = in_bytes.decode('ascii')
-                if op == 'CIFRAR':
-                    res = playfair_cifrar(txt, tabela, pos)
-                else:
-                    res = playfair_decifrar(txt, tabela, pos)
-                with open(outpath, 'w', encoding='utf-8') as f:
-                    f.write(res)
-                messagebox.showinfo('OK', 'Operação concluída')
+            if algoritmo == "Vigenere":
+                tabela = carregar_tabela(ctx["tabela_entry"].get())
+                resultado = cifrar_vigenere(msg, chave, tabela)
 
-            elif cipher == 'DES':
-                if not self.key_path.get():
-                    messagebox.showerror('Erro', 'Escolha ficheiro de chave para DES')
-                    return
-                key_txt = ler_chave_texto(self.key_path.get())
-                key_bytes = parse_key_bytes(key_txt)
-                data = open(inpath, 'rb').read()
-                if op == 'CIFRAR':
-                    out = des_encrypt(key_bytes, data)
-                else:
-                    out = des_decrypt(key_bytes, data)
-                with open(outpath, 'wb') as f:
-                    f.write(out)
-                messagebox.showinfo('OK', 'Operação concluída')
+            elif algoritmo == "Playfair":
+                resultado = playfair_cifrar(msg, chave)
 
-            elif cipher == 'AES':
-                if not self.key_path.get():
-                    messagebox.showerror('Erro', 'Escolha ficheiro de chave para AES')
-                    return
-                key_txt = ler_chave_texto(self.key_path.get())
-                key_bytes = parse_key_bytes(key_txt)
-                data = open(inpath, 'rb').read()
-                if op == 'CIFRAR':
-                    out = aes_encrypt(key_bytes, data)
-                else:
-                    out = aes_decrypt(key_bytes, data)
-                with open(outpath, 'wb') as f:
-                    f.write(out)
-                messagebox.showinfo('OK', 'Operação concluída')
             else:
-                messagebox.showerror('Erro', 'Cifra desconhecida')
+                raise ValueError("Algoritmo desconhecido.")
+
+            ctx["resultado_text"].delete("1.0", tk.END)
+            ctx["resultado_text"].insert(tk.END, resultado)
+
         except Exception as e:
-            messagebox.showerror('Erro', str(e))
+            messagebox.showerror("Erro", str(e))
+
+    def decifrar_generico(self, ctx, algoritmo):
+        try:
+            if algoritmo == "Vigenere":
+                tabela = carregar_tabela(ctx["tabela_entry"].get())
+                chave = carregar_chave(ctx["chave_entry"].get())
+                cripto = carregar_mensagem(ctx["msg_entry"].get())
+                resultado = decifrar_vigenere(cripto, chave, tabela)
+
+            elif algoritmo == "Playfair":
+                chave = carregar_chave(ctx["chave_entry"].get())
+                cripto = carregar_mensagem(ctx["msg_entry"].get())
+                resultado = playfair_decifrar(cripto, chave)
+
+            else:
+                raise ValueError("Algoritmo desconhecido.")
+
+            ctx["resultado_text"].delete("1.0", tk.END)
+            ctx["resultado_text"].insert(tk.END, resultado)
+
+        except Exception as e:
+            messagebox.showerror("Erro", str(e))
+
+    # -------------------------------------------------------
+    # Guardar resultado
+    # -------------------------------------------------------
+    def guardar_resultado_ctx(self, ctx):
+        texto = ctx["resultado_text"].get("1.0", tk.END).strip()
+        if not texto:
+            messagebox.showwarning("Aviso", "Não há resultado para guardar.")
+            return
+
+        nome = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Ficheiros de texto", "*.txt")]
+        )
+
+        if nome:
+            with open(nome, "w", encoding="utf-8") as f:
+                f.write(texto)
+            messagebox.showinfo("Sucesso", "Resultado guardado com sucesso!")
 
 
-if __name__ == '__main__':
-    root = tk.Tk()
-    app = App(root)
-    root.mainloop()
+root = tk.Tk()
+App(root)
+root.mainloop()
