@@ -1,5 +1,5 @@
 # ---------------------------------------------------------
-#  MÓDULO PLAYFAIR – totalmente compatível com o teu GUI
+#  MÓDULO PLAYFAIR 
 # ---------------------------------------------------------
 
 def montar_tabela(chave):
