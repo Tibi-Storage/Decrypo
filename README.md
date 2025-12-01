@@ -54,8 +54,8 @@ A GUI abre com 4 abas: **Vigenère**, **Playfair**, **DES** e **AES**.
 
 1. **Selecionar ficheiros** — clique em "Abrir" para escolher ficheiros de chave, tabela (se aplicável) e mensagem/entrada.
 2. **Validação automática** — a aplicação valida os ficheiros quando os seleciona e mostra o estado na caixa de resultado:
-   - ✓ Verde (implícito) = ficheiro válido
-   - ✗ Rosa/vermelho = campo inválido (background destacado)
+   - ficheiro válido
+   - campo inválido
    - Botões desativados = não é possível cifrar/decifrar até corrigir os erros
 3. **Cifrar ou Decifrar** — clique no botão correspondente.
 4. **Guardar resultado** — clique em "Guardar Resultado" para salvar o ficheiro processado.
@@ -178,29 +178,6 @@ python -c "import os; open('chave_aes256.bin', 'wb').write(os.urandom(32))"
 
 ---
 
-## Estrutura de ficheiros
-
-```
-Decrypo/
-├── Decrypo.py           # Aplicação principal (GUI)
-├── AES.py               # Módulo AES
-├── DES.py               # Módulo DES
-├── PLAYFAIR.py          # Módulo Playfair
-├── vigenere.py          # Módulo Vigenère
-├── examples/
-│   ├── chave.txt
-│   ├── mensagem.txt
-│   ├── tabela.txt
-│   ├── chave_playfair.txt
-│   ├── mensagem_playfair.txt
-│   ├── key_des.bin      # (criado após teste)
-│   ├── key_aes128.bin   # (criado após teste)
-│   └── test_aes_roundtrip.py
-└── README.md
-```
-
----
-
 ## Validação Automática na UI
 
 A aplicação valida os ficheiros **quando são selecionados**:
@@ -208,11 +185,6 @@ A aplicação valida os ficheiros **quando são selecionados**:
 - **Vigenère/Playfair:** verifica se a tabela, chave e mensagem são válidas (normalizadas, não vazias)
 - **DES:** verifica se a chave tem exatamente 8 bytes
 - **AES:** verifica se a chave tem 16, 24 ou 32 bytes (exibe em bits: 128/192/256)
-
-**Feedback visual:**
-- ✓ Mensagens verdes na caixa de resultado = campos válidos
-- ✗ Campos com background rosa/vermelho = inválidos
-- Botões "Cifrar"/"Decifrar" desativados até que todos os campos estejam válidos
 
 ---
 
@@ -238,26 +210,11 @@ Ambos usam **PKCS#7**:
 
 ### Segurança
 
-- **DES:** algoritmo legado, não recomendado para dados sensíveis (chave pequena)
+- **DES:** não recomendado para dados sensíveis (chave pequena)
 - **AES:** seguro; use AES-256 para máxima proteção
 
 ---
 
-## Testes
-
-Existe um script de teste rápido em `examples/test_aes_roundtrip.py`:
-
-```bash
-cd Decrypo
-python examples/test_aes_roundtrip.py
-```
-
-Esperado:
-```
-OK: AES roundtrip successful
-plaintext bytes: 62
-cipher bytes: 80 (62 + padding + 16 bytes IV)
-```
 
 ---
 
@@ -273,6 +230,3 @@ cipher bytes: 80 (62 + padding + 16 bytes IV)
 
 ---
 
-## Autor
-
-Desenvolvido como exercício de criptografia (AES, DES, Vigenère, Playfair).
